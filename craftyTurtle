@@ -1,0 +1,105 @@
+local arg = {...}
+local Recipes ={
+harvestcraft:beef_wellington={{minecraft:raw_beef,harvestcraft:spinach,nil},{harvestcraft:dough,harvestcraft:white_mushroom,nil},{nil,nil,nil}}
+}
+local barrelPosition = {harvestcraft:spinachItem={1,0},minecraft:fish={1,1},{minecraft:porkchop={2,0},minecraft:beef={2,1},minecraft:potato={3,0},minecraft:pumpkin={3,1},minecraft:egg={4,0},minecraft:sugar={4,1},minecraft:carrot={5,0},harvestcraft:whitemushroomItem={5,1},harvestcraft:saltItem={6,0},harvestcraft:freshmilkItem={6,1},harvestcraft:freshwaterItem={7,0},minecraft:chicken={7,1}}
+local toolList = {harvestcraft:saucepanItem,harvestcraft:mortarandpestleItem,harvestcraft:bakewareItem,harvestcraft:juicerItem,harvestcraft:potItem,harvestcraft:skilletItem,harvestcraft:mixingbowlItem}
+local x=0
+
+if(#arg>2) then
+  error("too many arguments")
+end
+if(#arg<1) then
+  error("too few arguments")
+end
+if(#arg=1) then
+  craft(arg[1],1)
+else
+  craft(arg[1],arg[2])
+end
+
+
+function craft(string goalItem, int goalAmount)
+currentRecipe = Recipes[goalItem]
+
+for(m=1,3,1) do
+  for(n=1,3,1) do
+    if(not includes(barrelPosition,currentRecipe[m][n])) then
+      craft(currentRecipe[m][n],goalAmount)
+    end
+  end
+end
+
+flag=false
+for(m=1,3,1) do
+  for(n=1,3,1) do
+  turtle.select(4*(m-1)+n)
+    local ingredient=currentRecipe[m][n]
+    
+    if(includes(barrelPosition,ingredient)) then
+      while(barrelPosition[ingredient][1]>x) do
+        while(not turtle.forward()) do
+        end
+      x=x+1
+      end
+      while(barrelPosition[ingredient][1]<x) do
+        while(not turtle.backwards()) do
+        end
+        x=x-1
+      end
+      if(barrelPosition[ingredient][2]==0) then
+      turtle.suckUp(goalAmount)
+      else
+        turtle.suckDown(goalAmount)
+      end
+    end
+    elseif (includes(toolList,ingredient)) then
+      while(x>0) do
+        while(not turtle.backwards()) do end
+        x=x-1
+      end
+      shuffle(ingredient,goalAmount)
+    else 
+      while(x<8) do
+       while(not turtle.forwards()) do end
+       x=x+1
+      end
+      shuffle(ingredient,goalAmount)
+    end
+  end
+end
+  while(x<8) do
+    while(not turtle.forwards()) do end
+    x=x+1
+  end
+  turtle.select(1)
+  turtle.craft(goalAmount)
+  turtle.dropDown(goalAmount)
+end
+
+function includes(table,value)
+  flag=false
+  for(tableVal in table) do
+  	if(tableVal==value) then
+    	flag=true
+    	break
+    end
+  end
+  return flag
+end
+
+function shuffle(item,amount)
+  local slot=turtle.getSelectedSlot()
+  turtle.select(16)
+  while(not turtle.getItemDetail(16).name==item) do
+    turtle.dropUp(amount)
+    if(not turtle.suckDown(amount)) then
+      error("item(s) not found")
+    end
+  end
+  turtle.transferTo(slot)
+  while(turtle.suckDown()) do
+    turtle.dropDown()
+  end
+  turtle.select(slot)
+end
